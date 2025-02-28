@@ -1,0 +1,382 @@
+import pyttsx3
+import speech_recognition as sr
+import datetime
+import os
+import wikipedia
+import pywhatkit
+import pyautogui
+import webbrowser
+import cv2
+import requests
+import operator
+import random
+import math
+import ast
+import threading
+import pyaudio
+
+# def run_camera():
+#     cap = cv2.VideoCapture(0)  # Open the default camera (0)
+    
+#     while True:
+#         ret, frame = cap.read()
+#         if not ret:
+#             break
+        
+#         cv2.imshow("Camera Feed", frame)
+        
+#         # Press 'q' to exit the camera feed
+#         if cv2.waitKey(1) & 0xFF == ord('q'):
+#             break
+
+#     cap.release()
+#     cv2.destroyAllWindows()
+    
+    
+def initialize_engine():
+    engine = pyttsx3.init("sapi5")
+    voices = engine.getProperty('voices')
+    engine.setProperty('voice', voices[2].id)
+    rate = engine.getProperty('rate')
+    engine.setProperty('rate', rate-50)
+    volume = engine.getProperty('volume')
+    engine.setProperty('volume', volume+0.25)
+    return engine
+
+def speak(text):
+    engine = initialize_engine()
+    engine.say(text)
+    engine.runAndWait()
+
+
+def commands():
+    r=sr.Recognizer()
+    with sr.Microphone() as source:
+        print("listening....")
+        r.pause_threshold =1.0
+        r.phrase_threshold=0.3
+        r.sample_rate = 48000
+        r.dynamic_energy_threshold=True
+        r.operation_timeout=5
+        r.non_speaking_duration=0.5
+        r.dynamic_energy_adjustment =2
+        r.energy_threshold=4000
+        r.phrase_time_limit= 10
+        r.adjust_for_ambient_noise(source ,duration=0.5)
+        audio =r.listen(source)
+
+    try:
+        query= r.recognize_google(audio)
+        print("wait for few moments...")
+        print(f"you just said:{query}\n")
+    except Exception as e:
+        print(e)
+        speak("please tell me again")
+        query="none"
+
+    return query
+
+ ##wishing 
+def wishings():
+    hour = int(datetime.datetime.now().hour)
+    if hour >=0 and hour<12:
+        print("good morning...")
+        speak("good morning...how can i help you")
+    elif hour>=12 and hour<17:
+        speak("good afternoon")
+        print("good afternoon..how can i help you")
+    elif hour>=17 and hour<21:
+        speak("good evening")
+        print("good evening..how can i help you")
+    else:
+        print("good night")
+        speak("good night..how can i help you")
+
+
+def social_media(command): 
+    if"facebook" in command:
+        speak("opening facebook")  
+        webbrowser.open("https://www.facebook.com/")
+    elif "instagram" in command:
+        speak("opening instagram")                      
+        webbrowser.open("https://www.instagram.com/")    
+    elif "whatsapp" in command:
+        speak("opening whatsapp")
+        webbrowser.open("https://web.whatsapp.com/")      
+    elif "twitter" in command:
+        speak("opening twitter")
+        webbrowser.open("https://x.com/?lang=en")  
+    elif "youtube" in command:
+        speak("opening youtube")
+        webbrowser.open("https://www.youtube.com/") 
+    elif "chat gpt"  in command:                                     
+        speak("opening chat gpt")
+        webbrowser.open("https://chatgpt.com/") 
+        
+# def open_camera():
+#     cap = cv2.VideoCapture(0)  # Open webcam
+#     speak("Opening camera.")
+#     while True:
+#         ret, frame = cap.read()
+#         if not ret:
+#             print("Failed to capture frame.")
+#             break
+#         cv2.imshow("Webcam", frame)
+        
+#         # Listen for "close camera" in the background
+#         query = commands()
+#         if "close camera" in query:
+#             speak("Closing camera.")
+        
+#         if cv2.waitKey(1) & 0xFF == ord('q'):
+#             break
+#     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+#     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+#     cap.release()
+#     cv2.destroyAllWindows()
+    
+
+if __name__=="__main__":
+    wishings()
+    while True:
+        query=commands().lower() 
+       
+
+ ## time
+        if "time" in query:
+            strTime = datetime.datetime.now().strftime("%H:%m:%S")
+            speak(f"the time is:{strTime}\n")
+            print(strTime)
+
+
+## chrome
+        elif "open chrome" in query:
+            speak("opening chrome")   
+            os.startfile("C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Google Chrome.lnk")
+        elif 'close chrome' in query: 
+            os.system("taskkill /f /im chrome.exe") 
+
+##wikipedia
+        elif "wikipedia" in query:
+            speak("searching in wikipedia")
+            try:
+                query=query.replace("wikipedia",'')
+                results =wikipedia.summary(query, sentences=1)
+                speak("according to your wikipedia")
+                print(results)
+                speak(results)
+            except:
+                print("no result found")
+                speak("no result found") 
+
+##youtube
+        elif "play" in query:
+            playquery=query.replace('play','')
+            speak("playing"+playquery)  
+            pywhatkit.playonyt(playquery)
+        elif 'close youtube' in query: 
+            os.system("taskkill /f /im msedge.exe")
+
+##typing
+        elif "type"  in query:
+            speak("please tell me what should i write")
+            while True:
+                typequery = commands()
+                if typequery=="exit typing":
+                    speak("done")
+                    break 
+                else:
+                    pyautogui.write(typequery)
+        
+
+#google serach        
+        elif"search"  in query:
+            speak("opening google")
+            search_url = f"https://www.google.com/search?q={query.replace(' ', '+')}"
+            webbrowser.open(search_url)  # Opens in a web browser
+            print(f"Searching for: {query}")
+           
+        elif 'open google' in query: 
+            speak("what should I search ?") 
+            qry =commands().lower() 
+            webbrowser.open(f"{qry}") 
+            results = wikipedia.summary(qry, sentences=1) 
+            speak(results) 
+        elif 'close google' in query: 
+            os.system("taskkill /f /im msedge.exe") 
+#this pc        
+        elif "open computer" in query:
+            speak("Opening File Explorer")
+            os.system("explorer")
+            
+        elif "shutdown" in query:
+            speak("Shutting down the system")
+            os.system("shutdown /s /t 1")
+            
+        elif "exit" in query:
+            speak("Exiting voice control")
+            break
+        
+        elif "restart the system" in query: 
+            os.system("shutdown /r /t 5")
+             
+        elif"open notepad" in query:
+            speak("opening note pad")
+            os.system("notepad")
+            
+        elif "close notepad" in query: 
+            os.system("taskkill /f /im notepad.exe")
+            
+        elif "open settings" in query or "open settings" in query:
+            os.system("start ms-settings:")
+            
+        elif "lock the pc" in query: 
+            os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
+            
+        elif "open command prompt" in query: 
+            os.system("start cmd")
+             
+        elif "close command prompt" in query: 
+            os.system("taskkill /f /im cmd.exe")
+             
+        # elif "open camera" in query:
+        #     open_camera()
+        
+        elif "exit" in query:
+            speak("Exiting program.")
+            
+        elif 'maximize this window' in query: 
+            pyautogui.hotkey('alt', 'space') 
+            pyautogui.press('x')
+            
+        elif 'minimise this window' in query: 
+            pyautogui.hotkey('alt', 'space')  
+            pyautogui.press('n')
+            
+        elif 'open history' in query: 
+            pyautogui.hotkey('ctrl', 'h') 
+            
+        elif 'open downloads' or 'open download' in query: 
+            pyautogui.hotkey('ctrl', 'j') 
+            
+        elif 'previous tab' in query: 
+            pyautogui.hotkey('ctrl', 'shift', 'tab') 
+            
+        elif 'next tab' in query: 
+            pyautogui.hotkey('ctrl', 'tab') 
+            
+        elif 'close tab' in query:
+            pyautogui.hotkey('ctrl', 'w') 
+            
+        elif 'close window' in query: 
+            pyautogui.hotkey('ctrl', 'shift', 'w')
+             
+        elif 'clear browsing history' in query: 
+            pyautogui.hotkey('ctrl', 'shift', 'delete') 
+            
+        elif 'close chrome' in query: 
+            os.system("taskkill /f /im chrome.exe")
+            
+        elif "screenshot" in query: 
+            speak('tell me a name for the file') 
+            name = commands().lower()  
+            img = pyautogui.screenshot() 
+            img.save(f"{name}.png")   
+            speak("screenshot saved") 
+        
+        #calculate 
+        elif "calculate" in query: 
+            def get_operator_fn(op):
+                return {
+                    '+': operator.add,
+                    'plus': operator.add,
+                    '-': operator.sub,
+                    'minus': operator.sub,
+                    'x': operator.mul,
+                    'times': operator.mul,
+                    'multiply'or'multiple'or'into': operator.mul,
+                    'divided': operator.truediv,
+                    'over': operator.truediv
+                }.get(op, None)
+
+            def eval_binary_expr(op1, oper, op2):
+                try:
+                    op1, op2 = float(op1), float(op2)
+                    operator_fn = get_operator_fn(oper)
+                    if operator_fn:
+                        return operator_fn(op1, op2)
+                    else:
+                        return "Unknown operator"
+                except ValueError:
+                    return "Invalid numbers"
+                except ZeroDivisionError:
+                    return "Cannot divide by zero"
+                
+            r = sr.Recognizer()
+            with sr.Microphone() as source:
+                speak("Ready. Please say your calculation.")
+                print("Listening...")
+                r.adjust_for_ambient_noise(source)
+                audio = r.listen(source)
+
+            try:
+                my_string = r.recognize_google(audio)
+                print("You said:", my_string)
+                words = my_string.lower().split()
+    
+                if len(words) == 3:
+                    result = eval_binary_expr(words[0], words[1], words[2])
+                    speak(f"Your result is {result}")
+                    print("Your result is", result)
+                else:
+                    speak("Sorry, I couldn't understand the calculation format.")
+                    print("Invalid input format.")
+
+            except sr.UnknownValueError:
+                speak("Sorry, I could not understand what you said.")
+            except sr.RequestError:
+                speak("There was an error with the speech recognition service.")
+  
+
+        elif "volume up" in query: 
+            pyautogui.press("volumeup") 
+            pyautogui.press("volumeup") 
+            pyautogui.press("volumeup") 
+            pyautogui.press("volumeup") 
+            pyautogui.press("volumeup") 
+            pyautogui.press("volumeup") 
+            pyautogui.press("volumeup") 
+            pyautogui.press("volumeup") 
+            pyautogui.press("volumeup") 
+            pyautogui.press("volumeup") 
+            pyautogui.press("volumeup") 
+            pyautogui.press("volumeup") 
+            pyautogui.press("volumeup") 
+            pyautogui.press("volumeup") 
+            pyautogui.press("volumeup") 
+        elif "volume down" in query: 
+            pyautogui.press("volumedown") 
+            pyautogui.press("volumedown") 
+            pyautogui.press("volumedown") 
+            pyautogui.press("volumedown") 
+            pyautogui.press("volumedown") 
+            pyautogui.press("volumedown") 
+            pyautogui.press("volumedown") 
+            pyautogui.press("volumedown") 
+            pyautogui.press("volumedown") 
+            pyautogui.press("volumedown") 
+            pyautogui.press("volumedown") 
+            pyautogui.press("volumedown") 
+            pyautogui.press("volumedown") 
+            pyautogui.press("volumedown") 
+            pyautogui.press("volumedown") 
+        elif "mute" in query: 
+            pyautogui.press("volumemute")
+
+#socail media
+        elif ("facebook" in query) or ("instagram" in query) or ("whatsapp in query"):
+            social_media(query)
+        elif("twitter"in query) or ("youtube" in query)  or ("chatgpt in query"):
+            social_media(query)
+        
